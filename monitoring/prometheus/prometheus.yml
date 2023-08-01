@@ -1,0 +1,48 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+           - 'alertmanager:9093'
+
+rule_files:
+  - '/etc/prometheus/alerts/rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'snmp'
+    file_sd_configs:
+      - files:
+        - '/etc/prometheus/targets/mikrotik-targets.yml'
+    metrics_path: /snmp
+    params:
+      module: [mikrotik]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp_exporter:9116 # The SNMP exporter's real hostname:port.
+
+  - job_name: 'blackbox'
+    file_sd_configs:
+      - files:
+        - '/etc/prometheus/targets/mikrotik-targets.yml'
+    metrics_path: /probe
+    params:
+        module: [icmp]
+    relabel_configs:
+        - source_labels: [__address__]
+          target_label: __param_target
+        - source_labels: [__param_target]
+          target_label: instance
+        - target_label: __address__
+          replacement: blackbox_exporter:9115

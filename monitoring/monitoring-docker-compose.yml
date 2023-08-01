@@ -1,0 +1,78 @@
+version: '3'
+
+volumes:
+  prometheus_data:
+    name: prometheus_data
+    driver: local
+
+  grafana_data:
+    name: grafana_data
+    driver: local
+
+  alertmanager_data:
+    name: alertmanager_data
+    driver: local
+
+services:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - './monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml'
+      - './monitoring/prometheus/targets/:/etc/prometheus/targets/'
+      - './monitoring/prometheus/alerts/:/etc/prometheus/alerts/'
+      - 'prometheus_data:/prometheus'
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+
+  snmp_exporter:
+    container_name: snmp_exporter
+    image: prom/snmp-exporter
+    restart: unless-stopped
+    volumes:
+      - './monitoring/snmp_exporter/snmp.yml:/etc/snmp_exporter/snmp.yml'
+    ports:
+      - 9116:9116
+
+  blackbox_exporter:
+    container_name: blackbox_exporter
+    image: prom/blackbox-exporter
+    restart: unless-stopped
+    volumes:
+      - './monitoring/blackbox_exporter/config.yml:/etc/blackbox_exporter/config.yml'
+    ports:
+      - 9115:9115
+
+  snmp_generator:
+    container_name: snmp_generator
+    image: prom/snmp-generator
+    restart: no
+    volumes:
+      - './monitoring/snmp_exporter/:/opt/'
+
+  alertmanager:
+    container_name: alertmanager
+    image: prom/alertmanager
+    restart: unless-stopped
+    volumes:
+      - './monitoring/alertmanager/alertmanager.yml:/config/alertmanager.yml'
+      - 'alertmanager_data:/data'
+    command: '--config.file=/config/alertmanager.yml --log.level=debug'
+    ports:
+      - 9093:9093
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    restart: unless-stopped
+    volumes:
+      - 'grafana_data:/var/lib/grafana'
+      - './monitoring/grafana:/etc/grafana/provisioning/datasources'
+    ports:
+      - 3000:3000

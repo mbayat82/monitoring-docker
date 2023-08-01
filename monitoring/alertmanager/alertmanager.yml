@@ -1,0 +1,26 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: [alertname]
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: email-me
+
+receivers:
+- name: email-me
+  email_configs:
+  - to: receiver@example.com
+    from: sender@example.com
+    smarthost: smtp.example.com:587
+    auth_username: "sender@example.comm"
+    auth_identity: "sender@example.com"
+    auth_password: "s$0meV3ry$trongPa$$w0rd"
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']

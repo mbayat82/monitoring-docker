@@ -1,0 +1,11 @@
+groups:
+- name: Reachability Alerts
+  rules:
+  - alert: device_unreachable_icmp
+    expr: probe_success == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      instance: "{{ $labels.instance }}"
+      description: "Instance has become unreachable!"

@@ -1,0 +1,6 @@
+- targets:
+  - 192.168.44.10
+  - 192.168.44.11
+  labels:
+    role: switches
+    env: lab
